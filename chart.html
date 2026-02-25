@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sample Data Chart</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Outfit:wght@600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --border: #2a2d3a;
+      --text: #e4e4e7;
+      --muted: #71717a;
+      --accent: #6ee7b7;
+      --accent2: #34d399;
+      --glow: rgba(110, 231, 183, 0.15);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(110, 231, 183, 0.04) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.04) 0%, transparent 60%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 860px;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 60px var(--glow);
+    }
+
+    .info-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .file-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(110, 231, 183, 0.08);
+      border: 1px solid rgba(110, 231, 183, 0.2);
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--accent);
+    }
+
+    .file-badge svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    .status {
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 0.4rem 0.8rem;
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .status.warn { color: #fbbf24; border-color: rgba(251, 191, 36, 0.2); background: rgba(251, 191, 36, 0.06); }
+    .status.ok   { color: var(--accent); border-color: rgba(110, 231, 183, 0.2); background: rgba(110, 231, 183, 0.06); }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+    }
+
+    canvas { width: 100% !important; height: 100% !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Sample Data Viewer</h1>
+    <p class="subtitle">Reading percentage values from a local data file.</p>
+
+    <div class="card">
+      <div class="info-bar">
+        <span class="file-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          data.txt
+        </span>
+        <span class="status" id="status">Loading…</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DATA_FILE = 'data.txt';
+    const defaultData = [67, 67, 67, 67];
+    let chart;
+
+    function buildChart(values) {
+      const labels = values.map((_, i) => i + 1);
+      const ctx = document.getElementById('chart').getContext('2d');
+
+      if (chart) chart.destroy();
+
+      const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.clientHeight);
+      gradient.addColorStop(0, 'rgba(110, 231, 183, 0.25)');
+      gradient.addColorStop(1, 'rgba(110, 231, 183, 0.0)');
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Percentage',
+            data: values,
+            borderColor: '#6ee7b7',
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: '#6ee7b7',
+            pointBorderColor: '#1a1d27',
+            pointBorderWidth: 2,
+            pointRadius: values.length > 50 ? 0 : 5,
+            pointHoverRadius: 7,
+            borderWidth: 2.5,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1a1d27',
+              borderColor: '#2a2d3a',
+              borderWidth: 1,
+              titleColor: '#6ee7b7',
+              bodyColor: '#e4e4e7',
+              padding: 12,
+              cornerRadius: 10,
+              callbacks: {
+                title: (items) => `Sample #${items[0].label}`,
+                label: (item) => `  ${item.parsed.y.toFixed(1)}%`
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Sample Number', color: '#71717a', font: { family: 'DM Sans', size: 13 } },
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#71717a', font: { family: 'DM Sans' } },
+              border: { color: '#2a2d3a' }
+            },
+            y: {
+              title: { display: true, text: 'Percentage (%)', color: '#71717a', font: { family: 'DM Sans', size: 13 } },
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#71717a', font: { family: 'DM Sans' }, callback: v => v + '%' },
+              border: { color: '#2a2d3a' },
+              suggestedMin: 0,
+              suggestedMax: 100
+            }
+          },
+          interaction: { intersect: false, mode: 'index' },
+          animation: { duration: 600, easing: 'easeOutQuart' }
+        }
+      });
+    }
+
+    function parseValues(text) {
+      return text
+        .split(/[\r\n]+/)
+        .map(line => line.trim().replace('%', ''))
+        .filter(line => line !== '' && !isNaN(parseFloat(line)))
+        .map(Number);
+    }
+
+    async function loadData() {
+      const statusEl = document.getElementById('status');
+      try {
+        const response = await fetch(DATA_FILE);
+        if (!response.ok) throw new Error('File not found');
+        const text = await response.text();
+        const values = parseValues(text);
+        if (values.length === 0) {
+          statusEl.textContent = 'No valid numbers found — using defaults';
+          statusEl.className = 'status warn';
+          buildChart(defaultData);
+        } else {
+          statusEl.textContent = `${values.length} sample${values.length > 1 ? 's' : ''} loaded`;
+          statusEl.className = 'status ok';
+          buildChart(values);
+        }
+      } catch (err) {
+        statusEl.textContent = 'File not found — using defaults (67%, 67%, 67%, 67%)';
+        statusEl.className = 'status warn';
+        buildChart(defaultData);
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
